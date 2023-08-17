@@ -1,0 +1,140 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Media App API
+
+  SAM Template for Media App API
+
+Parameters:
+  CodeBucketName:
+    Type: String
+    Default: 'aws-websockets-adaptor'
+    Description: (Required) The name of the S3 bucket where the Lambda function code is stored. Minimum 3 characters
+
+Resources:
+  MediaApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: serverless-media-api
+      Description: Media App API
+      EndpointConfiguration:
+          Types:
+          - REGIONAL
+
+  ProxyRoute:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref MediaApi
+      ParentId: !GetAtt MediaApi.RootResourceId
+      PathPart: '{proxy+}'
+    
+  ProxyRouteAnyMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref MediaApi
+      ResourceId: !Ref ProxyRoute
+      AuthorizationType: NONE
+      HttpMethod: ANY
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MediaApiLambdaFunction.Arn}/invocations
+          
+
+  Deployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - ProxyRouteAnyMethod
+    Properties:
+        RestApiId: !Ref MediaApi
+        StageName: Prod
+
+
+  MediaApiTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: "pk"
+          AttributeType: "S"
+        - AttributeName: "sk"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "pk"
+          KeyType: "HASH"
+        - AttributeName: "sk"
+          KeyType: "RANGE"
+      BillingMode:
+        PAY_PER_REQUEST
+      SSESpecification:
+        SSEEnabled: True
+      TableName: galleries
+
+  MediaApiLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: MediaApiLambdaFunction
+      CodeUri:
+        Bucket: !Ref CodeBucketName
+        Key: deploy.zip
+      Handler: Api
+      Role: !GetAtt MediaApiLambdaFunctionExecutionRole.Arn
+      MemorySize: 512
+      Timeout: 180
+      Runtime: dotnet6
+      Environment:
+        Variables:
+          TABLE_NAME: galleries
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: galleries
+
+  MediaApiLambdaFunctionPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - MediaApi
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref MediaApiLambdaFunction
+      Principal: apigateway.amazonaws.com
+
+  MediaApiLambdaFunctionExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: allowLambdaLogs
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:*
+                Resource: arn:aws:logs:*:*:*
+        - PolicyName: MediaApiLambdaDbPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:*
+                Resource: !GetAtt MediaApiTable.Arn
+        - PolicyName: MediaApiLambdaSQSPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:*
+                Resource: arn:aws:sqs:*:*:*
+Outputs:
+  MediaApiURI:
+    Description: "The Rest URI to connect to"
+    Value: !Join [ '', [ 'https://', !Ref MediaApi, '.execute-api.',!Ref 'AWS::Region','.amazonaws.com/','prod' ] ]
