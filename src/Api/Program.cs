@@ -1,6 +1,7 @@
 using System.Reflection;
 using Amazon;
 using Amazon.DynamoDBv2;
+using Amazon.Extensions.Configuration.SystemsManager;
 using Amazon.Extensions.NETCore.Setup;
 using Amazon.S3;
 using Api.Extensions;
@@ -17,8 +18,17 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+builder.Configuration.AddSystemsManager(config =>
+{
+    config.Path = "/media-api";
+    config.ParameterProcessor = new JsonParameterProcessor();
+    config.ReloadAfter = TimeSpan.FromMinutes(5);
+    config.Optional = true;
+});
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.Configure<UploadSettings>(builder.Configuration.GetSection("UploadSettings"));
+builder.Services.Configure<EventBusSettings>(builder.Configuration.GetSection("EventBusSettings"));
 
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
@@ -26,7 +36,7 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 builder.Services.AddScoped<IApiContext, ApiContext>();
 builder.Services.AddScoped<IGalleryRepository, GalleryRepository>();
-
+builder.Services.AddScoped<IEventBusManager, EventBusManager>();
 builder.Services.AddScoped<IFileService, FileService>();
 
 builder.Services.AddAWSService<IAmazonS3>();

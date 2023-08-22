@@ -134,6 +134,38 @@ Resources:
                 Action:
                   - sqs:*
                 Resource: arn:aws:sqs:*:*:*
+        - PolicyName: MediaApiLambdaSNSPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sns:*
+                Resource: arn:aws:sns:*:*:*
+        - PolicyName: allowParameterStore
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                  - ssm:GetParametersByPath
+                Resource: '*'
+  
+  MediaApiEventBus:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: MediaApiEventBus
+  
+  
+  MediaApiEventBusParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /media-api/EventBusSettings
+      Type: String
+      Value: !Join [ '', [ '{"IsEnabled":true,"TopicArn":"',!Ref MediaApiEventBus,'"}' ] ]
+      Description: EventBusSettings
+      
 Outputs:
   MediaApiURI:
     Description: "The Rest URI to connect to"
