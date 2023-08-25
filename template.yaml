@@ -13,43 +13,49 @@ Parameters:
 
 Resources:
   MediaApi:
-    Type: AWS::ApiGateway::RestApi
+    Type: AWS::ApiGatewayV2::Api
     Properties:
-      Name: serverless-media-api
-      Description: Media App API
-      EndpointConfiguration:
-          Types:
-          - REGIONAL
+      Name: media-api
+      ProtocolType: HTTP
 
   ProxyRoute:
-    Type: AWS::ApiGateway::Resource
+    Type: AWS::ApiGatewayV2::Route
     Properties:
-      RestApiId: !Ref MediaApi
-      ParentId: !GetAtt MediaApi.RootResourceId
-      PathPart: '{proxy+}'
-    
-  ProxyRouteAnyMethod:
-    Type: AWS::ApiGateway::Method
-    Properties:
-      RestApiId: !Ref MediaApi
-      ResourceId: !Ref ProxyRoute
+      ApiId: !Ref MediaApi
+      RouteKey: 'ANY /{proxy+}'
       AuthorizationType: NONE
-      HttpMethod: ANY
-      Integration:
-        Type: AWS_PROXY
-        IntegrationHttpMethod: POST
-        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MediaApiLambdaFunction.Arn}/invocations
-          
+      OperationName: ApiEndpoints
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref ProxyRouteAnyMethod
+
+  ProxyRouteAnyMethod:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref MediaApi
+      PayloadFormatVersion: '2.0'
+      Description: ProxyRoute Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub:
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MediaApiLambdaFunction.Arn}/invocations
+
 
   Deployment:
-    Type: AWS::ApiGateway::Deployment
+    Type: AWS::ApiGatewayV2::Deployment
     DependsOn:
-      - ProxyRouteAnyMethod
+      - ProxyRoute
     Properties:
-        RestApiId: !Ref MediaApi
-        StageName: Prod
-
-
+      ApiId: !Ref MediaApi
+  
+  Stage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      StageName: prod
+      Description: Prod Stage
+      DeploymentId: !Ref Deployment
+      ApiId: !Ref MediaApi
   MediaApiTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -87,7 +93,13 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: galleries
-
+            
+  MediaApiLambdaFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/MediaApiLambdaFunction"
+      RetentionInDays: 14
+      
   MediaApiLambdaFunctionPermission:
     Type: AWS::Lambda::Permission
     DependsOn:
@@ -165,7 +177,36 @@ Resources:
       Type: String
       Value: !Join [ '', [ '{"IsEnabled":true,"TopicArn":"',!Ref MediaApiEventBus,'"}' ] ]
       Description: EventBusSettings
-      
+
+  MediaApiUploadSettingsParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /media-api/UploadSettings
+      Type: String
+      Value: '{
+    "ExpireTime": 5,
+    "BaseFolder": "orginal",
+    "BucketName": "cdn.xxxxx.com",
+    "DefaultTags": {
+      "tag1": "value1",
+      "tag2": "value2"
+    },
+    "AllowedContentTypes": {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/gif": "gif"
+    }
+  }'
+      Description: UploadSettings
+
+  MediaApiApiKey:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /media-api/ApiKeyValidationSettings
+      Type: String
+      Value: !Join [ '', [ '{"IsEnabled":false,"HeaderName":"x-api-key","WhiteList":["/swagger"],"ApiKey":"',!Ref AWS::StackId,'"}' ] ]
+      Description: MediaApiKeyValidationSettings
+
 Outputs:
   MediaApiURI:
     Description: "The Rest URI to connect to"

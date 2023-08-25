@@ -4,8 +4,10 @@ using Amazon.DynamoDBv2;
 using Amazon.Extensions.Configuration.SystemsManager;
 using Amazon.Extensions.NETCore.Setup;
 using Amazon.S3;
+using Amazon.SimpleNotificationService;
 using Api.Extensions;
 using Api.Infrastructure.Context;
+using Api.Infrastructure.Middleware;
 using Domain.Options;
 using Domain.Repositories;
 using Domain.Services;
@@ -13,6 +15,9 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Infrastructure.Repositories;
 using Infrastructure.Services;
+using Serilog;
+using Serilog.Events;
+using Serilog.Formatting.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,9 +34,19 @@ builder.Configuration.AddSystemsManager(config =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.Configure<UploadSettings>(builder.Configuration.GetSection("UploadSettings"));
 builder.Services.Configure<EventBusSettings>(builder.Configuration.GetSection("EventBusSettings"));
+builder.Services.Configure<ApiKeyValidationSettings>(builder.Configuration.GetSection("ApiKeyValidationSettings"));
 
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+
+builder.Logging.ClearProviders();
+// Serilog configuration        
+var logger = new LoggerConfiguration()
+    .WriteTo.Console(new JsonFormatter())
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+    .CreateLogger();
+// Register Serilog
+builder.Logging.AddSerilog(logger);
 
 
 builder.Services.AddScoped<IApiContext, ApiContext>();
@@ -41,12 +56,10 @@ builder.Services.AddScoped<IFileService, FileService>();
 
 builder.Services.AddAWSService<IAmazonS3>();
 builder.Services.AddAWSService<IAmazonDynamoDB>();
-builder.Services.AddAWSLambdaHosting(LambdaEventSource.RestApi);
-builder.Services.AddDefaultAWSOptions(new AWSOptions
-{
-    Profile = "serverless",
-    Region = RegionEndpoint.EUCentral1
-});
+builder.Services.AddAWSService<IAmazonSimpleNotificationService>();
+builder.Services.AddAWSLambdaHosting(Environment.GetEnvironmentVariable("ApiGatewayType") == "RestApi" ? LambdaEventSource.RestApi : LambdaEventSource.HttpApi);
+var option = builder.Configuration.GetAWSOptions();
+builder.Services.AddDefaultAWSOptions(option);
 
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -61,7 +74,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler(exceptionHandlerApp => exceptionHandlerApp.Run(async context => await Results.Problem().ExecuteAsync(context)));
+}
+app.UseMiddleware<ApiKeyValidatorMiddleware>();
 app.UseHttpsRedirection();
 app.MapEndpointsCore(AppDomain.CurrentDomain.GetAssemblies());
 
