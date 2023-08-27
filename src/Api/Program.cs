@@ -53,6 +53,7 @@ builder.Services.AddScoped<IApiContext, ApiContext>();
 builder.Services.AddScoped<IGalleryRepository, GalleryRepository>();
 builder.Services.AddScoped<IEventBusManager, EventBusManager>();
 builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<ApiKeyValidatorMiddleware>();
 
 builder.Services.AddAWSService<IAmazonS3>();
 builder.Services.AddAWSService<IAmazonDynamoDB>();
