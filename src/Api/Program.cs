@@ -84,8 +84,3 @@ app.UseHttpsRedirection();
 app.MapEndpointsCore(AppDomain.CurrentDomain.GetAssemblies());
 
 app.Run();
-
-static IEnumerable<Assembly> GetAssembly()
-{
-    yield return typeof(Program).Assembly;
-}

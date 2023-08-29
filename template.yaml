@@ -41,7 +41,6 @@ Resources:
         Fn::Sub:
           arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MediaApiLambdaFunction.Arn}/invocations
 
-
   Deployment:
     Type: AWS::ApiGatewayV2::Deployment
     DependsOn:
