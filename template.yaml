@@ -139,6 +139,14 @@ Resources:
                 Action:
                   - dynamodb:*
                 Resource: !GetAtt MediaApiTable.Arn
+        - PolicyName: MediaApiLambdaS3Policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:*
+                Resource: '*'
         - PolicyName: MediaApiLambdaSQSPolicy
           PolicyDocument:
             Version: '2012-10-17'

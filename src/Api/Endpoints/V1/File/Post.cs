@@ -39,11 +39,19 @@ public class Post : IEndpoint
             request.Tags.Add(defaultTag.Key, defaultTag.Value);
         }
 
-        request.Tags.TryAdd("UserId", apiContext.CurrentUserId);
+
+        var userId = "anonymous";
+        if (apiContext.IsLogged)
+        {
+            request.Tags.TryAdd("UserId", apiContext.CurrentUserId);
+            userId = apiContext.CurrentUserId;
+        }
+
 
         var tags = string.Join("&", request.Tags.Select(q => $"{q.Key}={q.Value}"));
 
-        var pathOfObject = $"{uploadSettingsOptions.Value.BaseFolder}/{apiContext.CurrentUserId}/{request.FileName}.{allowedContentTypes[request.ContentType]}";
+        var pathOfObject = $"{uploadSettingsOptions.Value.BaseFolder}/{userId}/{request.FileName}.{allowedContentTypes[request.ContentType]}";
+        pathOfObject = pathOfObject.Replace("//", "/");
         var preSignedUrl = amazonS3.GetPreSignedURL(new GetPreSignedUrlRequest
         {
             Verb = HttpVerb.PUT,
@@ -58,7 +66,7 @@ public class Post : IEndpoint
             }
         });
 
-        var finalUrl = $"https://{uploadSettingsOptions.Value.BucketName}/{pathOfObject}";
+        var finalUrl = $"https://{uploadSettingsOptions.Value.BucketName.TrimEnd('/')}/{pathOfObject.TrimStart('/')}";
 
         return Results.Ok(new UploadUrlPostResponse(finalUrl, preSignedUrl, new Dictionary<string, string>
         {
