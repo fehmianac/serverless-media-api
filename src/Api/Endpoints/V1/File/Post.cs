@@ -47,10 +47,15 @@ public class Post : IEndpoint
             userId = apiContext.CurrentUserId;
         }
 
+        var baseFolder = uploadSettingsOptions.Value.BaseFolder;
+        if (request.IsTemp)
+        {
+            request.Tags.TryAdd("lifetime", "transient");
+            baseFolder = "temp";
+        }
 
         var tags = string.Join("&", request.Tags.Select(q => $"{q.Key}={q.Value}"));
-
-        var pathOfObject = $"{uploadSettingsOptions.Value.BaseFolder}/{userId}/{request.FileName}.{allowedContentTypes[request.ContentType]}";
+        var pathOfObject = $"{baseFolder}/{userId}/{request.FileName}.{allowedContentTypes[request.ContentType]}";
         pathOfObject = pathOfObject.Replace("//", "/");
         var preSignedUrl = amazonS3.GetPreSignedURL(new GetPreSignedUrlRequest
         {
@@ -63,7 +68,7 @@ public class Post : IEndpoint
             {
                 ["x-amz-acl"] = "public-read",
                 ["x-amz-tagging"] = tags
-            }
+            },
         });
 
         var finalUrl = $"https://{uploadSettingsOptions.Value.BucketName.TrimEnd('/')}/{pathOfObject.TrimStart('/')}";
@@ -88,6 +93,7 @@ public class Post : IEndpoint
         public string ContentType { get; set; } = default!;
         public string FileName { get; set; } = Guid.NewGuid().ToString();
         public Dictionary<string, string> Tags { get; set; } = new();
+        public bool IsTemp { get; set; }
 
         public class UploadUrlPostRequestValidator : AbstractValidator<UploadUrlPostRequest>
         {
