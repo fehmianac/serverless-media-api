@@ -41,4 +41,13 @@ public class GalleryRepository : DynamoRepository, IGalleryRepository
         var (galleries, token, _) = await GetPagedAsync<GalleryEntity>($"galleries#{userId}", nextToken, limit, cancellationToken);
         return (galleries, token);
     }
+
+    public async Task<List<GalleryEntity>> GetBatchGalleryAsync(Dictionary<string, string> ids, CancellationToken cancellationToken)
+    {
+        return await BatchGetAsync(ids.Select(q => new GalleryEntity
+        {
+            UserId = q.Key,
+            ItemId = q.Value
+        }).ToList(), cancellationToken);
+    }
 }
