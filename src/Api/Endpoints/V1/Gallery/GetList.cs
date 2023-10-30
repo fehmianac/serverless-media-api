@@ -30,7 +30,7 @@ public class GetList : IEndpoint
 
     public void MapEndpoint(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("v1/galleries", Handler)
+        endpoints.MapGet("v1/galleries/list", Handler)
             .Produces<List<GalleryDto>>()
             .Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status500InternalServerError)
