@@ -22,8 +22,7 @@ public class Put : IEndpoint
             return Results.NotFound();
         }
 
-        var galleryImage = gallery.Images.FirstOrDefault(x => x.Url == request.Url);
-        if (galleryImage == null)
+        if (string.IsNullOrEmpty(request.Id))
         {
             gallery.Images.Add(new GalleryEntity.GalleryImageModel
             {
@@ -34,9 +33,14 @@ public class Put : IEndpoint
         }
         else
         {
-            galleryImage.Rank = request.Rank;
+            var galleryImage = gallery.Images.FirstOrDefault(x => x.Id == request.Id);
+            if (galleryImage != null)
+            {
+                galleryImage.Rank = request.Rank;
+                galleryImage.Url = request.Url;
+            }
         }
-
+        
         await galleryRepository.SaveGalleryAsync(gallery, cancellationToken);
         return Results.Ok();
     }
@@ -55,6 +59,7 @@ public class Put : IEndpoint
 
 public class GalleryImagePutRequest
 {
+    public string? Id { get; set; }
     public string Url { get; set; } = default!;
     public int Rank { get; set; }
 }
