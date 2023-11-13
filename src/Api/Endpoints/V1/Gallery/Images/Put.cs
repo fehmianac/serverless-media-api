@@ -38,9 +38,10 @@ public class Put : IEndpoint
             {
                 galleryImage.Rank = request.Rank;
                 galleryImage.Url = request.Url;
+                galleryImage.Dimension = null;
             }
         }
-        
+
         await galleryRepository.SaveGalleryAsync(gallery, cancellationToken);
         return Results.Ok();
     }

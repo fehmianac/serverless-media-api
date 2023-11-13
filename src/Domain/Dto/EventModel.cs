@@ -1,6 +1,6 @@
 namespace Domain.Dto;
 
-public class EventModel<T>
+public class EventModel<T> : EventModel
 {
     public EventModel(string eventName, T data)
     {
@@ -8,6 +8,10 @@ public class EventModel<T>
         Data = data;
     }
 
-    public string EventName { get; }
     public T Data { get; }
+}
+
+public class EventModel
+{
+    public string EventName { get; init; } = default!;
 }

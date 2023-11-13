@@ -21,5 +21,16 @@ public class GalleryEntity : IEntity
         [JsonPropertyName("id")] public string Id { get; set; } = default!;
         [JsonPropertyName("url")] public string Url { get; set; } = default!;
         [JsonPropertyName("rank")] public int Rank { get; set; }
+        
+        [JsonPropertyName("dimension")] 
+        public ImageDimension? Dimension { get; set; } = new();
+        public class ImageDimension
+        {
+            [JsonPropertyName("width")] 
+            public int Width { get; set; }
+            [JsonPropertyName("height")]
+            public int Height { get; set; }
+            
+        }
     }
 }

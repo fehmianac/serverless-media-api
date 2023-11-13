@@ -54,6 +54,8 @@ public class Post : IEndpoint
             baseFolder = "temp";
         }
 
+        if (request.FileName.Contains('.'))
+            request.FileName = request.FileName.Split(".").First();
         var tags = string.Join("&", request.Tags.Select(q => $"{q.Key}={q.Value}"));
         var pathOfObject = $"{baseFolder}/{userId}/{request.FileName}.{allowedContentTypes[request.ContentType]}";
         pathOfObject = pathOfObject.Replace("//", "/");

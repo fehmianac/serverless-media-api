@@ -17,6 +17,14 @@ public class GalleryDto
         public string Id { get; set; } = default!;
         public string Url { get; set; } = default!;
         public int Rank { get; set; }
+
+        public ImageDimension Dimension { get; set; } = new();
+
+        public class ImageDimension
+        {
+            public int Width { get; set; }
+            public int Height { get; set; }
+        }
     }
 }
 
@@ -31,7 +39,12 @@ public static class GalleryDtoMapper
             {
                 Id = q.Id,
                 Rank = q.Rank,
-                Url = q.Url
+                Url = q.Url,
+                Dimension = new GalleryDto.GalleryImageDto.ImageDimension
+                {
+                    Height = q.Dimension?.Height ?? 0,
+                    Width = q.Dimension?.Width ?? 0
+                }
             }).ToList(),
             Name = entity.Name,
             CreatedAt = entity.CreatedAt,

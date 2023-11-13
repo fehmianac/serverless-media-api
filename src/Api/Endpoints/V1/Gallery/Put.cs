@@ -28,7 +28,8 @@ public class Put : IEndpoint
                 {
                     Rank = request.Images.IndexOf(q),
                     Url = q.Url,
-                    Id = Guid.NewGuid().ToString("N")
+                    Id = Guid.NewGuid().ToString("N"),
+                    Dimension = null,
                 }).ToList(),
                 Name = request.Name,
                 CreatedAt = utcNow,
