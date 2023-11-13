@@ -29,7 +29,11 @@ public class Put : IEndpoint
                     Rank = request.Images.IndexOf(q),
                     Url = q.Url,
                     Id = Guid.NewGuid().ToString("N"),
-                    Dimension = null,
+                    Dimension = new GalleryEntity.GalleryImageModel.ImageDimension
+                    {
+                        Width = q.Dimension.Width,
+                        Height = q.Dimension.Height
+                    },
                 }).ToList(),
                 Name = request.Name,
                 CreatedAt = utcNow,
@@ -54,7 +58,12 @@ public class Put : IEndpoint
             {
                 Rank = request.Images.IndexOf(q),
                 Url = q.Url,
-                Id = Guid.NewGuid().ToString("N")
+                Id = Guid.NewGuid().ToString("N"),
+                Dimension = new GalleryEntity.GalleryImageModel.ImageDimension
+                {
+                    Width = q.Dimension.Width,
+                    Height = q.Dimension.Height
+                },
             }));
 
             await fileService.MoveFileToDeletedFolderAsync(removedImages.Select(q => q.Url).ToList(), cancellationToken);
@@ -87,5 +96,14 @@ public class GalleryPutRequest
     {
         public string Url { get; set; } = default!;
         public int Rank { get; set; }
+
+
+        public DimensionModel Dimension { get; set; } = default!;
+
+        public class DimensionModel
+        {
+            public int Height { get; set; }
+            public int Width { get; set; }
+        }
     }
 }

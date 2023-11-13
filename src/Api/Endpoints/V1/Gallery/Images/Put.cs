@@ -28,7 +28,12 @@ public class Put : IEndpoint
             {
                 Id = Guid.NewGuid().ToString("N"),
                 Rank = request.Rank,
-                Url = request.Url
+                Url = request.Url,
+                Dimension = new GalleryEntity.GalleryImageModel.ImageDimension
+                {
+                    Height = request.Dimension.Height,
+                    Width = request.Dimension.Width
+                }
             });
         }
         else
@@ -38,7 +43,11 @@ public class Put : IEndpoint
             {
                 galleryImage.Rank = request.Rank;
                 galleryImage.Url = request.Url;
-                galleryImage.Dimension = null;
+                galleryImage.Dimension = new GalleryEntity.GalleryImageModel.ImageDimension
+                {
+                    Height = request.Dimension.Height,
+                    Width = request.Dimension.Width
+                };
             }
         }
 
@@ -63,4 +72,12 @@ public class GalleryImagePutRequest
     public string? Id { get; set; }
     public string Url { get; set; } = default!;
     public int Rank { get; set; }
+
+    public DimensionModel Dimension { get; set; } = default!;
+
+    public class DimensionModel
+    {
+        public int Height { get; set; }
+        public int Width { get; set; }
+    }
 }
