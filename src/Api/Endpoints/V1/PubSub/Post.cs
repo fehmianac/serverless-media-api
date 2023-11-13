@@ -13,6 +13,15 @@ namespace Api.Endpoints.V1.PubSub;
 
 public class Post : IEndpoint
 {
+
+    private static readonly HttpClient HttpClient = new();
+    
+    private static async Task<Stream> GetImage(string imageUrl, CancellationToken cancellationToken = default)
+    {
+        
+        return await HttpClient.GetStreamAsync(imageUrl, cancellationToken);
+        
+    }
     private static async Task<IResult> Handler(
         HttpContext context,
         [FromServices] IAmazonSimpleNotificationService simpleNotificationService,
@@ -56,15 +65,17 @@ public class Post : IEndpoint
         {
             try
             {
-                var image = await Image.LoadAsync(missingDimension.Url, cancellationToken);
+                var imageStream = await GetImage(missingDimension.Url, cancellationToken);
+                var image = await Image.LoadAsync(imageStream, cancellationToken);
                 missingDimension.Dimension = new GalleryEntity.GalleryImageModel.ImageDimension
                 {
                     Width = image.Width,
                     Height = image.Height
                 };
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine(ex);
                 missingDimension.Dimension = new GalleryEntity.GalleryImageModel.ImageDimension
                 {
                     Width = -1,
