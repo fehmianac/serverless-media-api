@@ -53,7 +53,7 @@ public class Post : IEndpoint
             request.Tags.TryAdd("lifetime", "transient");
             baseFolder = "temp";
         }
-
+        
         if (request.FileName.Contains('.'))
             request.FileName = request.FileName.Split(".").First();
         var tags = string.Join("&", request.Tags.Select(q => $"{q.Key}={q.Value}"));

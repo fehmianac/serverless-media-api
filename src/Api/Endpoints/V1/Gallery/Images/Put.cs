@@ -73,9 +73,9 @@ public class GalleryImagePutRequest
     public string Url { get; set; } = default!;
     public int Rank { get; set; }
 
-    public DimensionModel Dimension { get; set; } = default!;
+    public GalleryImagePutRequestDimensionModel Dimension { get; set; } = default!;
 
-    public class DimensionModel
+    public class GalleryImagePutRequestDimensionModel
     {
         public int Height { get; set; }
         public int Width { get; set; }
