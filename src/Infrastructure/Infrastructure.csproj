@@ -7,11 +7,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Amazon.Extensions.Configuration.SystemsManager" Version="5.1.0" />
-        <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.7.103.20" />
-        <PackageReference Include="AWSSDK.S3" Version="3.7.106.1" />
-        <PackageReference Include="AWSSDK.SimpleNotificationService" Version="3.7.200.22" />
-        <PackageReference Include="AWSSDK.SQS" Version="3.7.103.4" />
+        <PackageReference Include="Amazon.Extensions.Configuration.SystemsManager" Version="6.0.0" />
+        <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.7.301.14" />
+        <PackageReference Include="AWSSDK.S3" Version="3.7.305.28" />
+        <PackageReference Include="AWSSDK.SimpleNotificationService" Version="3.7.301" />
+        <PackageReference Include="AWSSDK.SQS" Version="3.7.300.52" />
         <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
     </ItemGroup>
     <ItemGroup>
