@@ -95,6 +95,24 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: galleries
             
+  MediaApiLabelCheckerLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: MediaApiLabelCheckerLambdaFunction
+      CodeUri:
+        Bucket: !Ref CodeBucketName
+        Key: deploy.zip
+      Handler: LabelChecker::LabelChecker.Entrypoint::Handler
+      Role: !GetAtt MediaApiLambdaFunctionExecutionRole.Arn
+      MemorySize: 512
+      Timeout: 180
+      Runtime: dotnet8
+      
+  MediaApiEventBus:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: MediaApiEventBus
+      
   MediaApiLambdaFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -172,12 +190,14 @@ Resources:
                   - ssm:GetParameter
                   - ssm:GetParametersByPath
                 Resource: '*'
-  
-  MediaApiEventBus:
-    Type: AWS::SNS::Topic
-    Properties:
-      TopicName: MediaApiEventBus
-  
+        - PolicyName: allowRekognition
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - rekognition:DetectLabels
+                Resource: '*'
   
   MediaApiEventBusParameter:
     Type: AWS::SSM::Parameter
@@ -186,6 +206,14 @@ Resources:
       Type: String
       Value: !Join [ '', [ '{"IsEnabled":true,"TopicArn":"',!Ref MediaApiEventBus,'"}' ] ]
       Description: EventBusSettings
+      
+  MediaApiLabelCheckerImageModerationConfigParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /media-api/ImageModerationConfig
+      Type: String
+      Value: !Join [ '', [ '{"AlertConfidence":90,"MinConfidence":60,"ForbiddenLabels":[],"IsEnabled":true,"TopicArn":"',!Ref MediaApiEventBus,'"}' ] ]
+      Description: EventBusSettings      
 
   MediaApiUploadSettingsParameter:
     Type: AWS::SSM::Parameter

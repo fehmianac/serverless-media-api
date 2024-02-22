@@ -6,6 +6,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "src\Domain\Domain
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "src\Infrastructure\Infrastructure.csproj", "{42E0139C-FA28-481B-A0AA-3D1799CF0007}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "utils", "utils", "{ED60E18A-0043-4E03-9525-AECE2C9FF56D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LabelChecker", "src\LabelChecker\LabelChecker.csproj", "{BC1A0C82-3186-4B71-9379-1280EEEDCCE6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +28,12 @@ Global
 		{42E0139C-FA28-481B-A0AA-3D1799CF0007}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{42E0139C-FA28-481B-A0AA-3D1799CF0007}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{42E0139C-FA28-481B-A0AA-3D1799CF0007}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BC1A0C82-3186-4B71-9379-1280EEEDCCE6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BC1A0C82-3186-4B71-9379-1280EEEDCCE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BC1A0C82-3186-4B71-9379-1280EEEDCCE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BC1A0C82-3186-4B71-9379-1280EEEDCCE6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{BC1A0C82-3186-4B71-9379-1280EEEDCCE6} = {ED60E18A-0043-4E03-9525-AECE2C9FF56D}
 	EndGlobalSection
 EndGlobal
