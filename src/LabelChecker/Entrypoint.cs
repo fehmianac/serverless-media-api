@@ -33,6 +33,7 @@ public class Entrypoint
 
     public async Task Handler(S3Event @event, ILambdaContext context)
     {
+        Console.WriteLine(JsonSerializer.Serialize(@event));
         var parameters = _amazonSimpleSystemsManagement.GetParameterAsync(new GetParameterRequest
         {
             Name = "/media-api/ImageModerationConfig",
