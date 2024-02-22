@@ -87,7 +87,7 @@ Resources:
       Role: !GetAtt MediaApiLambdaFunctionExecutionRole.Arn
       MemorySize: 512
       Timeout: 180
-      Runtime: dotnet6
+      Runtime: dotnet8
       Environment:
         Variables:
           TABLE_NAME: galleries
