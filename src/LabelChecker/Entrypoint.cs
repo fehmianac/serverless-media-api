@@ -13,6 +13,7 @@ using LabelChecker.Model;
 using LabelChecker.Options;
 using Tag = Amazon.S3.Model.Tag;
 
+[assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
 namespace LabelChecker;
 
 public class Entrypoint
