@@ -197,6 +197,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - rekognition:DetectLabels
+                  - rekognition:DetectModerationLabels
                 Resource: '*'
   
   MediaApiEventBusParameter:

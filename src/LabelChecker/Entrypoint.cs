@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.S3Events;
@@ -14,6 +15,7 @@ using LabelChecker.Options;
 using Tag = Amazon.S3.Model.Tag;
 
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
+
 namespace LabelChecker;
 
 public class Entrypoint
@@ -38,6 +40,7 @@ public class Entrypoint
         {
             Name = "/media-api/ImageModerationConfig",
         });
+
         ImageModerationConfig moderationConfig = new();
         if (parameters.Result.Parameter != null)
         {
@@ -51,6 +54,9 @@ public class Entrypoint
                 Console.WriteLine(e);
             }
         }
+
+        if (!moderationConfig.IsEnabled)
+            return;
 
         foreach (var record in @event.Records)
         {
@@ -102,6 +108,7 @@ public class Entrypoint
                     ChecksumAlgorithm = null
                 });
 
+                Console.WriteLine(JsonSerializer.Serialize(detectModerationLabelsResponse.ModerationLabels));
                 if (!detectModerationLabelsResponse.ModerationLabels.Any(q =>
                         moderationConfig.ForbiddenLabels.Any(x => q.Name.Contains(x)) &&
                         q.Confidence >= moderationConfig.AlertConfidence))
@@ -118,7 +125,7 @@ public class Entrypoint
 
             if (!string.IsNullOrEmpty(moderationConfig.TopicArn))
             {
-                await _amazonSimpleNotificationService.PublishAsync(new PublishRequest
+                var publishedStatus = await _amazonSimpleNotificationService.PublishAsync(new PublishRequest
                 {
                     TopicArn = moderationConfig.TopicArn,
                     Message = JsonSerializer.Serialize(new EventModel<object>("ImageModeration", new
@@ -129,6 +136,11 @@ public class Entrypoint
                             .ToDictionary(q => q.Key, q => q.Value)
                     }))
                 });
+
+                if (publishedStatus.HttpStatusCode == HttpStatusCode.OK)
+                {
+                    Console.WriteLine("Message published successfully");
+                }
             }
         }
     }
