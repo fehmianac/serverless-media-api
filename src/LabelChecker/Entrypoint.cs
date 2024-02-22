@@ -97,6 +97,8 @@ public class Entrypoint
                     });
                 }
 
+                objectTagging.TagSet = objectTagging.TagSet.Take(10).ToList();
+
                 await _amazonS3.PutObjectTaggingAsync(new PutObjectTaggingRequest
                 {
                     BucketName = record.S3.Bucket.Name,
