@@ -11,13 +11,24 @@ Parameters:
     Default: 'aws-websockets-adaptor'
     Description: (Required) The name of the S3 bucket where the Lambda function code is stored. Minimum 3 characters
 
+  ExposeType:
+    Type: String
+    Default: 'FunctionUrl'
+    AllowedValues: ['FunctionUrl', 'ApiGateway']
+    Description: (Required) The type of exposure for the API. FunctionUrl or ApiGateway
+
+Conditions:
+  IsFunctionUrlAuth: !Equals [!Ref ExposeType, "FunctionUrl"]
+  IsApiGatewayAuth: !Equals [!Ref ExposeType, "ApiGateway"]
+  
 Resources:
   MediaApi:
     Type: AWS::ApiGatewayV2::Api
     Properties:
       Name: media-api
       ProtocolType: HTTP
-
+    Condition: IsApiGatewayAuth
+    
   ProxyRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties:
@@ -29,7 +40,8 @@ Resources:
         - '/'
         - - 'integrations'
           - !Ref ProxyRouteAnyMethod
-
+    Condition: IsApiGatewayAuth
+    
   ProxyRouteAnyMethod:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
@@ -40,14 +52,16 @@ Resources:
       IntegrationUri:
         Fn::Sub:
           arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MediaApiLambdaFunction.Arn}/invocations
-
+    Condition: IsApiGatewayAuth
+    
   Deployment:
     Type: AWS::ApiGatewayV2::Deployment
     DependsOn:
       - ProxyRoute
     Properties:
       ApiId: !Ref MediaApi
-  
+    Condition: IsApiGatewayAuth
+    
   Stage:
     Type: AWS::ApiGatewayV2::Stage
     Properties:
@@ -55,8 +69,18 @@ Resources:
       Description: Prod Stage
       DeploymentId: !Ref Deployment
       ApiId: !Ref MediaApi
-      
-      
+    Condition: IsApiGatewayAuth
+    
+  MediaApiLambdaFunctionPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - MediaApi
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref MediaApiLambdaFunction
+      Principal: apigateway.amazonaws.com
+    Condition: IsApiGatewayAuth
+    
   MediaApiTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -95,6 +119,23 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: galleries
             
+  MediaApiApiFunctionUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      AuthType: NONE
+      TargetFunctionArn: !Ref MediaApiLambdaFunction
+    Condition: IsFunctionUrlAuth
+  
+  MediaApiFunctionUrlPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - MediaApiLambdaFunction
+    Properties:
+      Action: lambda:InvokeFunctionUrl
+      FunctionName: !Ref MediaApiLambdaFunction
+      FunctionUrlAuthType: 'NONE'
+      Principal: "*"
+      
   MediaApiLabelCheckerLambdaFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -118,16 +159,7 @@ Resources:
     Properties:
       LogGroupName: !Sub "/aws/lambda/MediaApiLambdaFunction"
       RetentionInDays: 14
-      
-  MediaApiLambdaFunctionPermission:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - MediaApi
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref MediaApiLambdaFunction
-      Principal: apigateway.amazonaws.com
-
+    
   MediaApiLambdaFunctionExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -244,8 +276,3 @@ Resources:
       Type: String
       Value: !Join [ '', [ '{"IsEnabled":false,"HeaderName":"x-api-key","WhiteList":["/swagger"],"ApiKey":"',!Ref AWS::StackId,'"}' ] ]
       Description: MediaApiKeyValidationSettings
-
-Outputs:
-  MediaApiURI:
-    Description: "The Rest URI to connect to"
-    Value: !Join [ '', [ 'https://', !Ref MediaApi, '.execute-api.',!Ref 'AWS::Region','.amazonaws.com/','prod' ] ]
