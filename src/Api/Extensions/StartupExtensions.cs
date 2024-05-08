@@ -19,11 +19,11 @@ public static class StartupExtensions
             }
 
             var endpoint = Activator.CreateInstance(endpointType);
-            if (endpoint is IEndpoint agadaEndpoint)
+            if (endpoint is IEndpoint iEndpoint)
             {
                 try
                 {
-                    agadaEndpoint.MapEndpoint(endpoints);
+                    iEndpoint.MapEndpoint(endpoints);
                 }
                 catch (Exception e)
                 {
@@ -32,6 +32,11 @@ public static class StartupExtensions
                 }
             }
         }
+        
+        endpoints.MapGet("ping", async context =>
+        {
+            await context.Response.WriteAsync("pong");
+        }).ExcludeFromDescription();
 
         return endpoints;
     }

@@ -16,6 +16,7 @@ public class ApiKeyValidatorMiddleware : IMiddleware
     public Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
         var whiteListPaths = _apiKeyValidationSettings.Value.WhiteList;
+        whiteListPaths.Add("ping");
         if (!_apiKeyValidationSettings.Value.IsEnabled || whiteListPaths.Any(q => context.Request.Path.ToString().Contains(q)))
             return next(context);
 
