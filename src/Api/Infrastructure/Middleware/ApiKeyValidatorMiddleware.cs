@@ -17,7 +17,7 @@ public class ApiKeyValidatorMiddleware : IMiddleware
     {
         var whiteListPaths = _apiKeyValidationSettings.Value.WhiteList;
         whiteListPaths.Add("ping");
-        return next(context);
+        //return next(context);
         if (!_apiKeyValidationSettings.Value.IsEnabled || whiteListPaths.Any(q => context.Request.Path.ToString().Contains(q)))
             return next(context);
 
