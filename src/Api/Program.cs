@@ -51,6 +51,8 @@ var logger = new LoggerConfiguration()
 
 // Register Serilog
 builder.Logging.AddSerilog(logger);
+Log.Logger = logger;
+builder.Host.UseSerilog(logger);
 
 builder.Services.AddScoped<IApiContext, ApiContext>();
 builder.Services.AddScoped<IGalleryRepository, GalleryRepository>();
