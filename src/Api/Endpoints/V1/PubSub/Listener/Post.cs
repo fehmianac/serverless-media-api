@@ -48,8 +48,10 @@ public class Post : IEndpoint
         switch (eventModel.EventName)
         {
             case "ImageModeration":
+                
                 var imageModerationPayload = JsonSerializer.Deserialize<EventModel<ModerationPayload>>(message.MessageText);
                 isProcessed = await galleryService.ModerateImageAsync(imageModerationPayload?.Data??new ModerationPayload(), cancellationToken);
+                logger.LogInformation("Image moderation event processed. Event: {Event}", eventModel.EventName);
                 break;
             default:
                 isProcessed = true;
