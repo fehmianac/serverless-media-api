@@ -1,7 +1,6 @@
 using Api.Infrastructure.Context;
 using Api.Infrastructure.Contract;
 using Domain.Entities;
-using Domain.Repositories;
 using Domain.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,48 +12,15 @@ public class Put : IEndpoint
         [FromRoute] string itemId,
         [FromBody] GalleryPutRequest request,
         [FromServices] IApiContext apiContext,
-        [FromServices] IGalleryRepository galleryRepository,
+        [FromServices] IGalleryService galleryService,
         [FromServices] IFileService fileService,
         CancellationToken cancellationToken)
     {
-        var utcNow = DateTime.UtcNow;
-        var gallery = await galleryRepository.GetGalleryAsync(apiContext.CurrentUserId, itemId, cancellationToken);
-        if (gallery == null)
+        
+        var gallery = new GalleryEntity
         {
-            gallery = new GalleryEntity
-            {
-                Description = request.Description,
-                Images = request.Images.Select(q => new GalleryEntity.GalleryImageModel
-                {
-                    Rank = request.Images.IndexOf(q),
-                    Url = q.Url,
-                    Id = Guid.NewGuid().ToString("N"),
-                    Dimension = new GalleryEntity.GalleryImageModel.ImageDimension
-                    {
-                        Width = q.Dimension.Width,
-                        Height = q.Dimension.Height
-                    },
-                }).ToList(),
-                Name = request.Name,
-                CreatedAt = utcNow,
-                UpdatedAt = utcNow,
-                ItemId = itemId,
-                UserId = apiContext.CurrentUserId
-            };
-        }
-        else
-        {
-            gallery.Description = request.Description;
-            gallery.Name = request.Name;
-            gallery.UpdatedAt = utcNow;
-
-            var removedImages = gallery.Images.Where(q => request.Images.All(w => w.Url != q.Url)).ToList();
-            foreach (var removedImage in removedImages)
-            {
-                gallery.Images.Remove(removedImage);
-            }
-
-            gallery.Images.AddRange(request.Images.Where(q => gallery.Images.All(w => q.Url != w.Url)).Select(q => new GalleryEntity.GalleryImageModel
+            Description = request.Description,
+            Images = request.Images.Select(q => new GalleryEntity.GalleryImageModel
             {
                 Rank = request.Images.IndexOf(q),
                 Url = q.Url,
@@ -64,12 +30,13 @@ public class Put : IEndpoint
                     Width = q.Dimension.Width,
                     Height = q.Dimension.Height
                 },
-            }));
-
-            await fileService.MoveFileToDeletedFolderAsync(removedImages.Select(q => q.Url).ToList(), cancellationToken);
-        }
-
-        await galleryRepository.SaveGalleryAsync(gallery, cancellationToken);
+            }).ToList(),
+            Name = request.Name,
+            ItemId = itemId,
+            UserId = apiContext.CurrentUserId
+        };
+        
+        await galleryService.SaveGallery(itemId, gallery, cancellationToken);
 
         return Results.Ok();
     }

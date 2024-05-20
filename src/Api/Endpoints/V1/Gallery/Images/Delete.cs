@@ -13,7 +13,7 @@ public class Delete : IEndpoint
         [FromRoute] string imageId,
         [FromServices] IApiContext apiContext,
         [FromServices] IGalleryRepository galleryRepository,
-        [FromServices] IFileService fileService,
+        [FromServices] IGalleryService galleryService,
         CancellationToken cancellationToken)
     {
         var userId = apiContext.CurrentUserId;
@@ -30,8 +30,8 @@ public class Delete : IEndpoint
         }
 
         gallery.Images.Remove(galleryImage);
-        await galleryRepository.SaveGalleryAsync(gallery, cancellationToken);
-        await fileService.MoveFileToDeletedFolderAsync(new List<string> {galleryImage.Url}, cancellationToken);
+        
+        await galleryService.SaveGallery(itemId, gallery, cancellationToken);
         return Results.Ok();
     }
 

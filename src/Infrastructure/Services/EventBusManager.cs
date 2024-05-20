@@ -30,6 +30,11 @@ public class EventBusManager : IEventBusManager
         return await PublishAsync(new EventModel<object>("GalleryModified", new {UserId = userId, ItemId = itemId}), cancellationToken);
     }
 
+    public async Task<bool> ProblematicImagesDetectedAsync(string userId, string itemId, CancellationToken cancellationToken)
+    {
+        return await PublishAsync(new EventModel<object>("ProblematicImagesDetected", new {UserId = userId, ItemId = itemId}), cancellationToken);
+    }
+
     private async Task<bool> PublishAsync(EventModel<object> eventModel, CancellationToken cancellationToken = default)
     {
         if (!_eventBusSettingsOptions.Value.IsEnabled)

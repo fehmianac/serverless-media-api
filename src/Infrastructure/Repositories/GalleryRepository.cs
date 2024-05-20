@@ -1,5 +1,6 @@
 using Amazon.DynamoDBv2;
 using Domain.Entities;
+using Domain.Entities.Base;
 using Domain.Repositories;
 using Domain.Services;
 using Infrastructure.Repositories.Base;
@@ -48,6 +49,47 @@ public class GalleryRepository : DynamoRepository, IGalleryRepository
         {
             UserId = q.Key,
             ItemId = q.Value
+        }).ToList(), cancellationToken);
+    }
+
+    public async Task<bool> BatchWriteDataAsync(List<IEntity> deleteEntities, List<IEntity> saveEntities, CancellationToken cancellationToken = default)
+    {
+         await base.BatchWriteAsync(saveEntities,deleteEntities, cancellationToken);
+         return true;
+    }
+
+    public async Task<bool> DeleteImageGalleryMappingAsync(string url, CancellationToken cancellationToken)
+    {
+        return await base.DeleteAsync(ImageGalleryMappingEntity.GetPk(), url, cancellationToken);
+    }
+
+    public async Task<bool> SaveImageGalleryMappingAsync(string url, string itemId, string userId, CancellationToken cancellationToken)
+    {
+        var entity = new ImageGalleryMappingEntity
+        {
+            ImageUrl = url,
+            ItemId = itemId,
+            UserId = userId,
+            CreatedAt = DateTime.UtcNow
+        };
+        return await base.SaveAsync(entity, cancellationToken);
+    }
+
+    public Task<ImageGalleryMappingEntity?> GetImageGalleryMappingAsync(string imageUrl, CancellationToken cancellationToken)
+    {
+        return GetAsync<ImageGalleryMappingEntity>(ImageGalleryMappingEntity.GetPk(), imageUrl, cancellationToken);
+    }
+
+    public Task<bool> SaveProblematicImageAsync(ProblematicImagesEntity problematicImagesEntity, CancellationToken cancellationToken)
+    {
+        return SaveAsync(problematicImagesEntity, cancellationToken);
+    }
+
+    public Task<List<ProblematicImagesEntity>> GetProblematicImagesAsync(List<string> toList, CancellationToken cancellationToken)
+    {
+        return BatchGetAsync(toList.Select(q => new ProblematicImagesEntity
+        {
+            ImageUrl = q
         }).ToList(), cancellationToken);
     }
 }

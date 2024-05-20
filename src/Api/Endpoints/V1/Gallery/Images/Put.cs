@@ -2,6 +2,7 @@ using Api.Infrastructure.Context;
 using Api.Infrastructure.Contract;
 using Domain.Entities;
 using Domain.Repositories;
+using Domain.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Endpoints.V1.Gallery.Images;
@@ -13,6 +14,7 @@ public class Put : IEndpoint
         [FromBody] GalleryImagePutRequest request,
         [FromServices] IApiContext apiContext,
         [FromServices] IGalleryRepository galleryRepository,
+        [FromServices] IGalleryService galleryService,
         CancellationToken cancellationToken)
     {
         var userId = apiContext.CurrentUserId;
@@ -50,8 +52,9 @@ public class Put : IEndpoint
                 };
             }
         }
+        
+        await galleryService.SaveGallery(itemId,gallery, cancellationToken);
 
-        await galleryRepository.SaveGalleryAsync(gallery, cancellationToken);
         return Results.Ok();
     }
 
