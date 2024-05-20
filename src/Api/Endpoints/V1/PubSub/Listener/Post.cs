@@ -31,6 +31,7 @@ public class Post : IEndpoint
         var message = Message.ParseMessage(body);
 
 
+        Console.WriteLine(message.MessageText);
         var isValid = message.Validate();
         if (!isValid)
         {
