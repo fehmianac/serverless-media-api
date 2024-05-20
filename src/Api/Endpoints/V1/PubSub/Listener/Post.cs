@@ -31,22 +31,20 @@ public class Post : IEndpoint
         var message = Message.ParseMessage(body);
 
 
-        Console.WriteLine(message.MessageText);
         var isValid = message.Validate();
         if (!isValid)
         {
-            await simpleNotificationService.ConfirmSubscriptionAsync(message.TopicArn, message.Token,cancellationToken);
+            logger.LogWarning("Invalid message received. Message: {Message}", body);
+            await simpleNotificationService.ConfirmSubscriptionAsync(message.TopicArn, message.Token,
+                cancellationToken);
             return Results.BadRequest();
         }
-
-        Console.WriteLine(message.MessageText);
         var eventModel = JsonSerializer.Deserialize<EventModel>(message.MessageText);
         
         if (eventModel?.EventName == null)
             return Results.Ok();
         
         var isProcessed = false;
-
         switch (eventModel.EventName)
         {
             case "ImageModeration":
@@ -54,7 +52,6 @@ public class Post : IEndpoint
                 var imageModerationPayload = JsonSerializer.Deserialize<EventModel<ModerationPayload>>(message.MessageText);
                 isProcessed = await galleryService.ModerateImageAsync(imageModerationPayload?.Data??new ModerationPayload(), cancellationToken);
                 logger.LogInformation("Image moderation event processed. Event: {Event}", eventModel.EventName);
-                Console.WriteLine("Image moderation event processed. Event: {Event}", eventModel.EventName);
                 break;
             default:
                 isProcessed = true;

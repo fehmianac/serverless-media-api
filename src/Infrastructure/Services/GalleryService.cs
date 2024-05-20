@@ -84,7 +84,15 @@ public class GalleryService : IGalleryService
             return true;
         }
 
-        await CheckProblematicImages(gallery, cancellationToken);
+        
+        var image = gallery.Images.FirstOrDefault(q => q.Url == imageGalleryMapping.ImageUrl);
+        if(image == null)
+        {
+            return true;
+        }
+        gallery.Images.Remove(image);
+        await _galleryRepository.SaveGalleryAsync(gallery, cancellationToken);
+        await _eventBusManager.ProblematicImagesDetectedAsync(gallery.UserId,gallery.ItemId, cancellationToken);
         return true;
     }
 
