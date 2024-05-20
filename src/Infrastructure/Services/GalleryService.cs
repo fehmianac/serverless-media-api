@@ -93,7 +93,7 @@ public class GalleryService : IGalleryService
     {
         var deletableList = new List<IEntity>();
         var saveableList = new List<IEntity>();
-        deletableList.AddRange(oldImages.Select(q => new ImageGalleryMappingEntity
+        deletableList.AddRange(oldImages.Distinct().Select(q => new ImageGalleryMappingEntity
         {
             ImageUrl = q
         }));
