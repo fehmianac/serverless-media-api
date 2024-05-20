@@ -38,6 +38,7 @@ public class Post : IEndpoint
             return Results.BadRequest();
         }
 
+        Console.WriteLine(message.MessageText);
         var eventModel = JsonSerializer.Deserialize<EventModel>(message.MessageText);
         
         if (eventModel?.EventName == null)
