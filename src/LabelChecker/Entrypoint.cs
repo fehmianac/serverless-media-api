@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.S3Events;
 using Amazon.Rekognition;
@@ -90,22 +91,16 @@ public class Entrypoint
 
                 foreach (var label in detectModerationLabelsResponse.ModerationLabels)
                 {
-                    var tagKey = label.Name;
+                    var tagKey =  GenerateSlug(label.Name);
 
-                    // Ensure the tag key complies with AWS constraints
-                    if (!IsValidTagKey(tagKey))
-                    {
-                        // Modify the tag key to be valid
-                        tagKey = SanitizeTagKey(tagKey);
-                    }
-
+                    if(tagKey.Length > 128)
+                        tagKey = tagKey[..128];
+                    
                     objectTagging.TagSet.Add(new Tag
                     {
-                        Key = tagKey,
+                        Key =tagKey,
                         Value = label.Confidence.ToString("F")
                     });
-                    
-                    
                 }
 
                 objectTagging.TagSet = objectTagging.TagSet.Take(10).ToList();
@@ -158,27 +153,22 @@ public class Entrypoint
         }
     }
 
-    // Function to check if a tag key is valid
-    private static bool IsValidTagKey(string key)
+    private static string GenerateSlug(string phrase)
     {
-        return !string.IsNullOrEmpty(key) && key.Length <= 128 && !key.StartsWith("aws:");
-        // Add any other necessary checks for special characters if needed
+        var str = RemoveAccent(phrase).ToLower();
+        // invalid chars           
+        str = Regex.Replace(str, @"[^a-z0-9\s-]", "");
+        // convert multiple spaces into one space   
+        str = Regex.Replace(str, @"\s+", " ").Trim();
+        // cut and trim 
+        str = str.Substring(0, str.Length <= 45 ? str.Length : 45).Trim();
+        str = Regex.Replace(str, @"\s", "-"); // hyphens   
+        return str;
     }
 
-// Function to sanitize a tag key to make it valid
-    private static string SanitizeTagKey(string key)
+    private static string RemoveAccent(string txt)
     {
-        if (key.Length > 128)
-        {
-            key = key.Substring(0, 128);
-        }
-
-        if (key.StartsWith("aws:"))
-        {
-            key = key[4..]; // Remove the reserved prefix
-        }
-
-        // Replace or remove any invalid characters as needed
-        return key;
+        var bytes = System.Text.Encoding.GetEncoding("Cyrillic").GetBytes(txt);
+        return System.Text.Encoding.ASCII.GetString(bytes);
     }
 }
