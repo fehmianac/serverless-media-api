@@ -168,7 +168,7 @@ public class Entrypoint
 
     private static string RemoveAccent(string txt)
     {
-        var bytes = System.Text.Encoding.GetEncoding("Cyrillic").GetBytes(txt);
+        var bytes = System.Text.Encoding.GetEncoding("UTF-8").GetBytes(txt);
         return System.Text.Encoding.ASCII.GetString(bytes);
     }
 }
