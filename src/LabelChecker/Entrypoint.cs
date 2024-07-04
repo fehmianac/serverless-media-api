@@ -90,9 +90,18 @@ public class Entrypoint
 
                 foreach (var label in detectModerationLabelsResponse.ModerationLabels)
                 {
+                    var tagKey = label.Name;
+
+                    // Ensure the tag key complies with AWS constraints
+                    if (!IsValidTagKey(tagKey))
+                    {
+                        // Modify the tag key to be valid
+                        tagKey = SanitizeTagKey(tagKey);
+                    }
+
                     objectTagging.TagSet.Add(new Tag
                     {
-                        Key = label.Name,
+                        Key = tagKey,
                         Value = label.Confidence.ToString("F")
                     });
                 }
@@ -145,5 +154,29 @@ public class Entrypoint
                 }
             }
         }
+    }
+
+    // Function to check if a tag key is valid
+    private static bool IsValidTagKey(string key)
+    {
+        return !string.IsNullOrEmpty(key) && key.Length <= 128 && !key.StartsWith("aws:");
+        // Add any other necessary checks for special characters if needed
+    }
+
+// Function to sanitize a tag key to make it valid
+    private static string SanitizeTagKey(string key)
+    {
+        if (key.Length > 128)
+        {
+            key = key.Substring(0, 128);
+        }
+
+        if (key.StartsWith("aws:"))
+        {
+            key = key[4..]; // Remove the reserved prefix
+        }
+
+        // Replace or remove any invalid characters as needed
+        return key;
     }
 }
