@@ -104,10 +104,12 @@ public class Entrypoint
                         Key = tagKey,
                         Value = label.Confidence.ToString("F")
                     });
+                    
+                    
                 }
 
                 objectTagging.TagSet = objectTagging.TagSet.Take(10).ToList();
-
+                Console.WriteLine($"Tagging: {JsonSerializer.Serialize(objectTagging)}");
                 await _amazonS3.PutObjectTaggingAsync(new PutObjectTaggingRequest
                 {
                     BucketName = record.S3.Bucket.Name,
