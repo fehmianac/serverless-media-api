@@ -90,6 +90,17 @@ public class Entrypoint
                 {
                     var detectedLabels = await _rekognitionClient.DetectLabelsAsync(new DetectLabelsRequest
                     {
+                        Settings = new DetectLabelsSettings
+                        {
+                            GeneralLabels = new GeneralLabelsSettings
+                            {
+                                LabelCategoryExclusionFilters = null,
+                                LabelCategoryInclusionFilters = null,
+                                LabelExclusionFilters = null,
+                                LabelInclusionFilters = ignoredLabels
+                            },
+                            ImageProperties = null
+                        },
                         Image = new Image
                         {
                             S3Object = new Amazon.Rekognition.Model.S3Object
