@@ -59,7 +59,7 @@ public class Post : IEndpoint
         var tags = string.Join("&", request.Tags.Select(q => $"{q.Key}={q.Value}"));
         var pathOfObject = $"{baseFolder}/{userId}/{request.FileName}.{allowedContentTypes[request.ContentType]}";
         pathOfObject = pathOfObject.Replace("//", "/");
-        var preSignedUrl = amazonS3.GetPreSignedURL(new GetPreSignedUrlRequest
+        var preSignedUrl = await amazonS3.GetPreSignedURLAsync(new GetPreSignedUrlRequest
         {
             Verb = HttpVerb.PUT,
             Expires = DateTime.UtcNow.AddMinutes(uploadSettingsOptions.Value.ExpireTime),

@@ -108,8 +108,7 @@ public class Entrypoint
                                 Bucket = record.S3.Bucket.Name,
                                 Name = record.S3.Object.Key
                             }
-                        },
-                        MinConfidence = 90,
+                        }
                     });
 
                 Console.WriteLine("ignored labels" + JsonSerializer.Serialize(ignoredLabels));
