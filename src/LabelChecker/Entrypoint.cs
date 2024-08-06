@@ -7,6 +7,7 @@ using Amazon.Rekognition;
 using Amazon.Rekognition.Model;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Amazon.S3.Util;
 using Amazon.SimpleNotificationService;
 using Amazon.SimpleNotificationService.Model;
 using Amazon.SimpleSystemsManagement;
@@ -81,8 +82,34 @@ public class Entrypoint
                 BucketName = record.S3.Bucket.Name
             });
 
+         
             try
             {
+                var ignoredLabels = moderationConfig.IgnoredLabels;
+                if (ignoredLabels.Any())
+                {
+                    var detectedLabels = await _rekognitionClient.DetectLabelsAsync(new DetectLabelsRequest
+                    {
+                        Image = new Image
+                        {
+                            S3Object = new Amazon.Rekognition.Model.S3Object
+                            {
+                                Bucket = record.S3.Bucket.Name,
+                                Name = record.S3.Object.Key
+                            }
+                        },
+                        MinConfidence = 90,
+                    });
+
+               
+                    if (detectedLabels.Labels.Any(q => ignoredLabels.Contains(q.Name)))
+                    {
+                        await PublishProblematicImage(moderationConfig, record.S3, new List<Tag>());
+                        return;
+                    }
+                    
+                }
+
                 var detectModerationLabelsResponse =
                     await _rekognitionClient.DetectModerationLabelsAsync(detectModerationLabelsRequest);
 
@@ -91,14 +118,14 @@ public class Entrypoint
 
                 foreach (var label in detectModerationLabelsResponse.ModerationLabels)
                 {
-                    var tagKey =  GenerateSlug(label.Name);
+                    var tagKey = GenerateSlug(label.Name);
 
-                    if(tagKey.Length > 128)
+                    if (tagKey.Length > 128)
                         tagKey = tagKey[..128];
-                    
+
                     objectTagging.TagSet.Add(new Tag
                     {
-                        Key =tagKey,
+                        Key = tagKey,
                         Value = label.Confidence.ToString("F")
                     });
                 }
@@ -124,6 +151,8 @@ public class Entrypoint
                     Console.WriteLine("It's okay");
                     return;
                 }
+                
+                await PublishProblematicImage(moderationConfig, record.S3, objectTagging.TagSet);
             }
             catch (Exception e)
             {
@@ -131,26 +160,33 @@ public class Entrypoint
                 return;
             }
 
-            if (!string.IsNullOrEmpty(moderationConfig.TopicArn))
-            {
-                var publishedStatus = await _amazonSimpleNotificationService.PublishAsync(new PublishRequest
-                {
-                    TopicArn = moderationConfig.TopicArn,
-                    Message = JsonSerializer.Serialize(new EventModel<object>("ImageModeration", new
-                    {
-                        Key = record.S3.Object.Key,
-                        Bucket = record.S3.Bucket.Name,
-                        Tags = tag.Tagging.Select(q => new { Key = q.Key, Value = q.Value })
-                            .ToDictionary(q => q.Key, q => q.Value)
-                    }))
-                });
+            
+        }
+        
+    }
 
-                if (publishedStatus.HttpStatusCode == HttpStatusCode.OK)
+    private async Task<bool> PublishProblematicImage(ImageModerationConfig moderationConfig, S3Event.S3Entity record, List<Tag> tag)
+    {
+        if (!string.IsNullOrEmpty(moderationConfig.TopicArn))
+        {
+            var publishedStatus = await _amazonSimpleNotificationService.PublishAsync(new PublishRequest
+            {
+                TopicArn = moderationConfig.TopicArn,
+                Message = JsonSerializer.Serialize(new EventModel<object>("ImageModeration", new
                 {
-                    Console.WriteLine("Message published successfully");
-                }
+                    Key = record.Object.Key,
+                    Bucket = record.Bucket.Name,
+                    Tags = tag.Select(q => new { Key = q.Key, Value = q.Value })
+                        .ToDictionary(q => q.Key, q => q.Value)
+                }))
+            });
+
+            if (publishedStatus.HttpStatusCode == HttpStatusCode.OK)
+            {
+                Console.WriteLine("Message published successfully");
             }
         }
+        return true;
     }
 
     private static string GenerateSlug(string phrase)

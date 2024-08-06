@@ -7,4 +7,6 @@ public class ImageModerationConfig
     public string TopicArn { get; set; } = default!;
     public float AlertConfidence { get; set; } = 90;
     public float MinConfidence { get; set; } = 60;
+    
+    public List<string> IgnoredLabels { get; set; } = new();
 }
