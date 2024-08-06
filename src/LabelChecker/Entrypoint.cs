@@ -111,15 +111,11 @@ public class Entrypoint
                         }
                     });
 
-                Console.WriteLine("ignored labels" + JsonSerializer.Serialize(ignoredLabels));
-                Console.WriteLine("Result" + JsonSerializer.Serialize(detectedLabels.Labels));
-                Console.WriteLine("Result" + JsonSerializer.Serialize(detectedLabels));
                     if (detectedLabels.Labels.Any(q => ignoredLabels.Contains(q.Name)))
                     {
                         await PublishProblematicImage(moderationConfig, record.S3, new List<Tag>());
                         return;
                     }
-                    
                 }
 
                 var detectModerationLabelsResponse =
