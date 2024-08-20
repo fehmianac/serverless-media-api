@@ -96,6 +96,37 @@ public class GalleryService : IGalleryService
         return true;
     }
 
+    public async Task<bool> GenerateImageVariantAsync(GalleryEntity entity, CancellationToken cancellationToken)
+    {
+        var imageSizes = new List<KeyValuePair<int,int>>
+        {
+            new(60, 60),
+            new(120, 120),
+            new(180, 180),
+            new(266, 213),
+            new(533, 120),
+            new(800, 640),
+            new(100, 100),
+            new(200, 200),
+            new(300, 300),
+        };
+        
+        var httpClient = new HttpClient();
+        var imageUrls = entity.Images.Select(q => q.Url).ToList();
+        var tasks = new List<Task>();
+        foreach (var imageUrl in imageUrls)
+        {
+            foreach (var (width, height) in imageSizes)
+            {
+                var url = imageUrl.Replace("orginal", $"{width}x{height}");
+                tasks.Add(httpClient.GetAsync(url, cancellationToken));
+            }
+        }
+
+        await Task.WhenAll(tasks);
+        return true;
+    }
+
     private async Task<bool> ManageImageMapping(GalleryEntity gallery, IReadOnlyCollection<string> oldImages,
         CancellationToken cancellationToken)
     {

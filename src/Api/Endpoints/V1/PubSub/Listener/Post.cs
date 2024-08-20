@@ -8,6 +8,7 @@ using Api.Infrastructure;
 using Api.Infrastructure.Contract;
 using Domain.Dto;
 using Domain.Dto.Event;
+using Domain.Entities;
 using Domain.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -52,6 +53,12 @@ public class Post : IEndpoint
                 var imageModerationPayload = JsonSerializer.Deserialize<EventModel<ModerationPayload>>(message.MessageText);
                 isProcessed = await galleryService.ModerateImageAsync(imageModerationPayload?.Data??new ModerationPayload(), cancellationToken);
                 logger.LogInformation("Image moderation event processed. Event: {Event}", eventModel.EventName);
+                break;
+            
+            case "GalleryModified":
+                var galleryModifiedPayload = JsonSerializer.Deserialize<EventModel<GalleryEntity>>(message.MessageText);
+                isProcessed = await galleryService.GenerateImageVariantAsync(galleryModifiedPayload.Data,cancellationToken);
+                logger.LogInformation("Gallery modified event processed. Event: {Event}", eventModel.EventName);
                 break;
             default:
                 isProcessed = true;
