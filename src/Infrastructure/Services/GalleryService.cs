@@ -104,7 +104,7 @@ public class GalleryService : IGalleryService
             new(120, 120),
             new(180, 180),
             new(266, 213),
-            new(533, 120),
+            new(533, 426),
             new(800, 640),
             new(100, 100),
             new(200, 200),
