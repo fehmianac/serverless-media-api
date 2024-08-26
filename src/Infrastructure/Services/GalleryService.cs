@@ -118,7 +118,9 @@ public class GalleryService : IGalleryService
         {
             foreach (var (width, height) in imageSizes)
             {
+                var extension = imageUrl.Split('.').Last();
                 var url = imageUrl.Replace("orginal", $"{width}x{height}");
+                url = url.Replace(extension, "webp");
                 tasks.Add(httpClient.GetAsync(url, cancellationToken));
             }
         }
